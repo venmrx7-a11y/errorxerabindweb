@@ -166,38 +166,46 @@ def create_rebind(access, email, identity_token, verifier_token):
     except:
         return False, "Error"
 
-def change_email_with_sec(access, email, otp, sec_code):
+# ============ CHANGE EMAIL WITH SEC (NO OTP) ============
+def change_email_with_sec(access, email, sec_code):
     try:
-        success, data = send_otp(access, email, "normal")
-        if not success:
-            return False, "Failed to send OTP"
-        success, verifier = verify_otp(access, email, otp, "normal")
-        if not success:
-            return False, "Invalid OTP"
+        # Verify Identity with security code only
         success, identity = verify_identity(access, sec_code)
         if not success:
             return False, "Invalid Security Code"
-        success, msg = create_rebind(access, email, identity, verifier)
+        
+        # Create rebind (this changes email)
+        success, msg = create_rebind(access, email, identity, "NO_VERIFIER")
         if success:
-            return True, msg
+            return True, "Email changed successfully with Security Code!"
         return False, msg
     except Exception as e:
         return False, str(e)
 
-def change_email_no_sec(access, cur_email, new_email, otp1, otp2):
+# ============ CHANGE EMAIL WITH OTP (FIXED) ============
+def change_email_with_otp(access, cur_email, new_email, otp1, otp2):
     try:
+        # Step 1: Send OTP to current email
         success, data = send_otp(access, cur_email, "current")
         if not success:
             return False, "Failed to send OTP to current email"
+        
+        # Step 2: Verify OTP for current email
         success, verifier1 = verify_otp(access, cur_email, otp1, "current")
         if not success:
             return False, "Invalid OTP for current email"
+        
+        # Step 3: Send OTP to new email
         success, data = send_otp(access, new_email, "new")
         if not success:
             return False, "Failed to send OTP to new email"
+        
+        # Step 4: Verify OTP for new email
         success, verifier2 = verify_otp(access, new_email, otp2, "new")
         if not success:
             return False, "Invalid OTP for new email"
+        
+        # Step 5: Change email
         url = "https://chngeforgotcrownx72.vercel.app/change"
         rsp = requests.get(url, params={
             'access_token': access,
@@ -206,7 +214,7 @@ def change_email_no_sec(access, cur_email, new_email, otp1, otp2):
             'verifier_token': verifier2
         }, timeout=10)
         if is_success(rsp):
-            return True, "Email changed successfully!"
+            return True, "Email changed successfully with OTP!"
         return False, "Failed to change email"
     except Exception as e:
         return False, str(e)
@@ -257,7 +265,7 @@ def cancel_bind(access):
     except:
         return False, "Error"
 
-# ============ ALL HTML TEMPLATES ============
+# ============ HTML TEMPLATES ============
 
 INDEX_HTML = """
 <!DOCTYPE html>
@@ -479,8 +487,7 @@ body{background:#0a0a0a;min-height:100vh;color:#c39bd3;display:flex;justify-cont
 {% if success %}<div class="success">{{ success }}</div>{% endif %}
 <form method="POST" action="/change-email-sec">
 <div class="input-group"><label>ACCESS TOKEN</label><input type="text" name="access_token" placeholder="Enter Access Token" required></div>
-<div class="input-group"><label>NEW EMAIL</label><input type="email" name="email" placeholder="Enter New Email" required></div>
-<div class="input-group"><label>OTP CODE</label><input type="text" name="otp" placeholder="Enter OTP" required></div>
+<div class="input-group"><label>NEW EMAIL</label><input type="email" name="new_email" placeholder="Enter New Email" required></div>
 <div class="input-group"><label>SECURITY CODE</label><input type="text" name="sec_code" placeholder="Enter Security Code" required></div>
 <button type="submit" class="btn">CHANGE EMAIL</button>
 </form>
@@ -525,9 +532,9 @@ body{background:#0a0a0a;min-height:100vh;color:#c39bd3;display:flex;justify-cont
 <div class="input-group"><label>CURRENT BIND EMAIL</label><input type="email" name="current_email" placeholder="Enter Current Bound Email" required></div>
 <button type="submit" class="btn">SEND OTP TO CURRENT EMAIL</button>
 {% elif step == 2 %}
-<div class="input-group"><label>OTP CODE (CURRENT EMAIL)</label><input type="text" name="otp1" placeholder="Enter OTP" required></div>
+<div class="input-group"><label>OTP CODE (CURRENT EMAIL)</label><input type="text" name="otp1" placeholder="Enter OTP from Current Email" required></div>
 <div class="input-group"><label>NEW EMAIL</label><input type="email" name="new_email" placeholder="Enter New Email" required></div>
-<button type="submit" class="btn">SEND OTP TO NEW EMAIL</button>
+<button type="submit" class="btn">VERIFY & SEND OTP TO NEW EMAIL</button>
 <input type="hidden" name="access_token" value="{{ request.form.get('access_token', '') }}">
 <input type="hidden" name="current_email" value="{{ request.form.get('current_email', '') }}">
 {% elif step == 3 %}
@@ -878,12 +885,11 @@ def change_email_sec_route():
         return redirect('/')
     if request.method == 'POST':
         access = request.form.get('access_token')
-        email = request.form.get('email')
-        otp = request.form.get('otp')
-        sec = request.form.get('sec_code')
-        if not all([access, email, otp, sec]):
+        new_email = request.form.get('new_email')
+        sec_code = request.form.get('sec_code')
+        if not all([access, new_email, sec_code]):
             return render_template_string(CHANGE_EMAIL_SEC_HTML, error="All fields required!")
-        success, msg = change_email_with_sec(access, email, otp, sec)
+        success, msg = change_email_with_sec(access, new_email, sec_code)
         if success:
             return render_template_string(CHANGE_EMAIL_SEC_HTML, success=msg)
         return render_template_string(CHANGE_EMAIL_SEC_HTML, error=msg)
@@ -932,7 +938,7 @@ def change_email_otp_route():
             success, verifier = verify_otp(access, new_email, otp2, "new")
             if not success:
                 return render_template_string(CHANGE_EMAIL_OTP_HTML, step=3, error="Invalid OTP for new email!")
-            success, msg = change_email_no_sec(access, current_email, new_email, "123456", "654321")
+            success, msg = change_email_with_otp(access, current_email, new_email, otp1, otp2)
             if success:
                 return render_template_string(CHANGE_EMAIL_OTP_HTML, success=msg)
             return render_template_string(CHANGE_EMAIL_OTP_HTML, step=3, error=msg)
