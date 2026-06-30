@@ -195,59 +195,8 @@ def add_new_email(access, email, otp, sec_code):
     except:
         return False, "Error"
 
-def change_no_sec(access, cur_email, new_email, otp1, otp2):
-    try:
-        url1 = "https://chngeforgotcrownx72.vercel.app/otp"
-        rsp1 = requests.get(url1, params={'access_token': access, 'current_email': cur_email}, timeout=10)
-        if not is_success(rsp1):
-            return False, "Failed to send OTP to current email"
-        url2 = "https://chngeforgotcrownx72.vercel.app/verify"
-        rsp2 = requests.get(url2, params={'access_token': access, 'current_email': cur_email, 'otp': otp1}, timeout=10)
-        if not is_success(rsp2):
-            return False, "Invalid OTP for current email"
-        identity = rsp2.json().get("identity_token") or rsp2.json().get("data", {}).get("identity_token")
-        url3 = "https://chngeforgotcrownx72.vercel.app/newotp"
-        rsp3 = requests.get(url3, params={'access_token': access, 'new_email': new_email}, timeout=10)
-        if not is_success(rsp3):
-            return False, "Failed to send OTP to new email"
-        url4 = "https://chngeforgotcrownx72.vercel.app/newverify"
-        rsp4 = requests.get(url4, params={'access_token': access, 'new_email': new_email, 'otp': otp2}, timeout=10)
-        if not is_success(rsp4):
-            return False, "Invalid OTP for new email"
-        verifier = rsp4.json().get("verifier_token") or rsp4.json().get("data", {}).get("verifier_token")
-        url5 = "https://chngeforgotcrownx72.vercel.app/change"
-        rsp5 = requests.get(url5, params={
-            'access_token': access,
-            'new_email': new_email,
-            'identity_token': identity,
-            'verifier_token': verifier
-        }, timeout=10)
-        if is_success(rsp5):
-            return True, "Email changed successfully!"
-        return False, "Failed to change email"
-    except:
-        return False, "Error"
+# ============ ALL HTML TEMPLATES ============
 
-def unbind_no_sec(access, cur_email, otp):
-    try:
-        url1 = "https://chngeforgotcrownx72.vercel.app/otp"
-        rsp1 = requests.get(url1, params={'access_token': access, 'current_email': cur_email}, timeout=10)
-        if not is_success(rsp1):
-            return False, "Failed to send OTP"
-        url2 = "https://chngeforgotcrownx72.vercel.app/verify"
-        rsp2 = requests.get(url2, params={'access_token': access, 'current_email': cur_email, 'otp': otp}, timeout=10)
-        if not is_success(rsp2):
-            return False, "Invalid OTP"
-        identity = rsp2.json().get("identity_token") or rsp2.json().get("data", {}).get("identity_token")
-        url3 = "https://crownxforgotremove23.vercel.app/forgotunbind"
-        rsp3 = requests.get(url3, params={'access_token': access, 'identity_token': identity}, timeout=10)
-        if is_success(rsp3):
-            return True, "Unbind request created! 15 Days Timer Started."
-        return False, "Failed to unbind"
-    except:
-        return False, "Error"
-
-# ============ HTML TEMPLATES ============
 INDEX_HTML = """
 <!DOCTYPE html>
 <html>
@@ -266,9 +215,9 @@ body::before{content:'';position:absolute;width:100%;height:100%;background:url(
 .container{position:relative;z-index:1;width:100%;max-width:500px;padding:20px;}
 .card{background:rgba(10,10,10,0.92);backdrop-filter:blur(20px);border-radius:30px;padding:40px 35px;border:1px solid #7b2fbe44;box-shadow:0 0 60px rgba(123,47,190,0.1);}
 .logo{text-align:center;margin-bottom:25px;}
-.logo img{max-width:120px;height:auto;margin-bottom:10px;}
-.logo h1{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;background:linear-gradient(135deg,#9b59b6,#6c3483);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;}
-.logo p{color:#7b2fbe88;font-size:11px;letter-spacing:3px;margin-top:5px;font-family:'Orbitron',monospace;}
+.logo img{max-width:180px;height:auto;margin-bottom:10px;}
+.logo h1{font-family:'Orbitron',monospace;font-size:32px;font-weight:900;background:linear-gradient(135deg,#9b59b6,#6c3483);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;}
+.logo p{color:#7b2fbe88;font-size:13px;letter-spacing:4px;margin-top:5px;font-family:'Orbitron',monospace;}
 .sub{color:#7b2fbe88;text-align:center;font-size:12px;margin-bottom:25px;letter-spacing:2px;}
 .input-group{margin-bottom:20px;}
 .input-group label{display:block;color:#9b59b688;font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
@@ -283,7 +232,7 @@ body::before{content:'';position:absolute;width:100%;height:100%;background:url(
 .support-btn{display:inline-block;margin-top:15px;padding:8px 20px;background:rgba(155,89,182,0.15);border:1px solid #7b2fbe44;border-radius:20px;color:#9b59b688;font-size:11px;text-decoration:none;transition:all 0.3s;letter-spacing:1px;}
 .support-btn:hover{background:rgba(155,89,182,0.25);border-color:#9b59b6;color:#c39bd3;}
 .support-btn img{width:16px;height:16px;vertical-align:middle;margin-right:6px;}
-@media(max-width:480px){.card{padding:30px 20px;}.logo h1{font-size:22px;}}
+@media(max-width:480px){.card{padding:30px 20px;}.logo h1{font-size:22px;}.logo img{max-width:140px;}}
 </style>
 </head>
 <body>
@@ -324,8 +273,8 @@ DASHBOARD_HTML = """
 body{background:#0a0a0a;min-height:100vh;color:#c39bd3;}
 .navbar{background:rgba(10,10,10,0.95);padding:15px 25px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #7b2fbe33;flex-wrap:wrap;gap:10px;}
 .navbar .logo-section{display:flex;align-items:center;gap:12px;}
-.navbar .logo-section img{max-height:35px;}
-.navbar .logo-section h1{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;background:linear-gradient(135deg,#9b59b6,#6c3483);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.navbar .logo-section img{max-height:45px;}
+.navbar .logo-section h1{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;background:linear-gradient(135deg,#9b59b6,#6c3483);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .nav-right{display:flex;align-items:center;gap:15px;}
 .nav-right .id-badge{color:#7b2fbe88;font-size:11px;border:1px solid #7b2fbe33;padding:4px 14px;border-radius:20px;}
 .menu-btn{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px;}
@@ -345,7 +294,7 @@ body{background:#0a0a0a;min-height:100vh;color:#c39bd3;}
 .copy-btn{background:rgba(155,89,182,0.15);border:none;border-radius:8px;padding:4px 12px;color:#9b59b6;cursor:pointer;font-size:11px;transition:0.3s;}
 .copy-btn:hover{background:rgba(155,89,182,0.25);}
 .footer{text-align:center;margin-top:40px;font-size:10px;color:#7b2fbe44;padding:15px;border-top:1px solid #7b2fbe11;}
-@media(max-width:480px){.container{padding:15px;}.navbar{padding:12px 15px;}.navbar .logo-section h1{font-size:14px;}}
+@media(max-width:480px){.container{padding:15px;}.navbar{padding:12px 15px;}.navbar .logo-section h1{font-size:16px;}.navbar .logo-section img{max-height:35px;}}
 </style>
 </head>
 <body>
@@ -677,7 +626,8 @@ th{color:#7b2fbe88;font-weight:bold;letter-spacing:1px;}
 </html>
 """
 
-# ============ ROUTES ============
+# ============ ALL ROUTES ============
+
 @app.route('/')
 def index():
     if 'user_id' in session:
@@ -742,7 +692,6 @@ def change_email_route():
             email = request.form.get('email')
             if not access or not email:
                 return render_template_string(CHANGE_EMAIL_HTML, step=1, error="All fields required!")
-            # Send OTP
             success, data = send_otp(access, email)
             if not success:
                 return render_template_string(CHANGE_EMAIL_HTML, step=1, error="Failed to send OTP")
@@ -753,13 +702,14 @@ def change_email_route():
             email = request.form.get('email')
             otp = request.form.get('otp')
             sec = request.form.get('sec_code')
+            if not all([access, email, otp, sec]):
+                return render_template_string(CHANGE_EMAIL_HTML, step=2, error="All fields required!")
             success, verifier = verify_otp(access, email, otp)
             if not success:
                 return render_template_string(CHANGE_EMAIL_HTML, step=2, error="Invalid OTP")
             success, identity = verify_identity(access, sec)
             if not success:
                 return render_template_string(CHANGE_EMAIL_HTML, step=2, error="Invalid Security Code")
-            # Send OTP to new email
             success, data = send_otp(access, email)
             if not success:
                 return render_template_string(CHANGE_EMAIL_HTML, step=2, error="Failed to send OTP to new email")
@@ -771,6 +721,8 @@ def change_email_route():
             otp_new = request.form.get('otp_new')
             verifier = request.form.get('verifier')
             identity = request.form.get('identity')
+            if not all([access, email, otp_new, verifier, identity]):
+                return render_template_string(CHANGE_EMAIL_HTML, step=3, error="All fields required!")
             success, new_verifier = verify_otp(access, email, otp_new)
             if not success:
                 return render_template_string(CHANGE_EMAIL_HTML, step=3, error="Invalid OTP for new email")
@@ -788,6 +740,8 @@ def unbind_route():
     if request.method == 'POST':
         access = request.form.get('access_token')
         sec = request.form.get('sec_code')
+        if not all([access, sec]):
+            return render_template_string(UNBIND_HTML, error="All fields required!")
         success, msg = unbind_with_sec(access, sec)
         if success:
             return render_template_string(UNBIND_HTML, success=msg)
@@ -800,6 +754,8 @@ def revoke_route():
         return redirect('/')
     if request.method == 'POST':
         access = request.form.get('access_token')
+        if not access:
+            return render_template_string(REVOKE_HTML, error="Access Token required!")
         success, msg = revoke_token(access)
         if success:
             return render_template_string(REVOKE_HTML, success=msg)
@@ -815,6 +771,8 @@ def add_email_route():
         email = request.form.get('email')
         otp = request.form.get('otp')
         sec = request.form.get('sec_code')
+        if not all([access, email, otp, sec]):
+            return render_template_string(ADD_EMAIL_HTML, error="All fields required!")
         success, msg = add_new_email(access, email, otp, sec)
         if success:
             return render_template_string(ADD_EMAIL_HTML, success=msg)
@@ -827,6 +785,8 @@ def cancel_bind_route():
         return redirect('/')
     if request.method == 'POST':
         access = request.form.get('access_token')
+        if not access:
+            return render_template_string(CANCEL_HTML, error="Access Token required!")
         success, msg = cancel_bind(access)
         if success:
             return render_template_string(CANCEL_HTML, success=msg)
@@ -836,7 +796,8 @@ def cancel_bind_route():
 @app.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        if request.form.get('key') == ADMIN_KEY:
+        key = request.form.get('key')
+        if key == ADMIN_KEY:
             session['admin'] = True
             return redirect('/admin')
         return render_template_string(INDEX_HTML, error="INVALID ADMIN KEY!")
